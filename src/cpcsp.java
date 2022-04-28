@@ -17,27 +17,40 @@ public class cpcsp {
 				listOfWords.add(currentLine);
 			}
 		}
+		inputReader.close();
 		
-		List<List<Character>> tempCrossWordBoard = new ArrayList<>();
-
+		
 		File readBoard = new File(crosswordBoardName);
 		Scanner inputBoard = new Scanner(readBoard);
+		int noOfLines = 0;
+		int noOfCommas = 0;
 		while(inputBoard.hasNext()) {
 			String currentLine = inputBoard.nextLine();
-			String currentBoardRow[] = currentLine.split(",");
-			List<Character> tempBoardRow = new ArrayList<>();
-			for(int i=0;i<currentBoardRow.length;i++){
-				tempBoardRow.add(currentBoardRow[i].charAt(0));
+			noOfLines++;
+			noOfCommas = 0;
+			for(int i=0;i<currentLine.length();i++){
+				if(currentLine.charAt(i)==','){
+					noOfCommas++;
+				}
 			}
-			tempCrossWordBoard.add(tempBoardRow);
+			
 		}
+		inputBoard.close();
+		Scanner inputBoardNew = new Scanner(readBoard);
+		int index = 0;
+		char crosswordBoard[][] = new char[noOfLines][noOfCommas+1];
+		while(inputBoardNew.hasNext()) {
+			String currentLine = inputBoardNew.nextLine();
+			String currLineArr[] = currentLine.split(",");
 
-		char crosswordBoard[][] = new char[tempCrossWordBoard.size()][tempCrossWordBoard.get(0).size()];
-		for(int i=0;i<crosswordBoard.length;i++){
-			for(int j=0;j<crosswordBoard.length;j++){
-				crosswordBoard[i][j] = tempCrossWordBoard.get(i).get(j);
+			for(int i=0;i<currLineArr.length;i++){
+				crosswordBoard[index][i] = currLineArr[i].charAt(0);
 			}
+			index++;
 		}
+		inputBoardNew.close();
+		// displayBoard(crosswordBoard);
+		// System.out.println();
 
         HashMap<Integer, Combination> combinationBySize = new HashMap<Integer, Combination>();
 		for (int i = 0; i < listOfWords.size(); i++) {
@@ -64,8 +77,6 @@ public class cpcsp {
 
 		getHorizontalPlacements(horizontalPlacements, crosswordBoard, combinationBySize);
 		getVerticalPlacements(verticalPlacements, crosswordBoard, combinationBySize);
-		
-		displayBoard(crosswordBoard);
 
 		// connecting the neighbors (Vertical into Horizontal)
 		for (int i = 0; i < horizontalPlacements.size(); i++) {
@@ -114,12 +125,11 @@ public class cpcsp {
 		Stack<BoardState> currentboardState = new Stack<BoardState>();
 		currentboardState.push(initialS);
 
-		int iterationNumber = 0;
 		int backTrack = 0;
 		char[][] currentCrossWordBoard;
+		long startTime = System.currentTimeMillis();
 
 		while (!currentboardState.isEmpty()) {
-			iterationNumber++;
 			// creating an array list of placements
 			ArrayList<Placement> tempPlacements = new ArrayList<Placement>();
 			// printing the current crosswordBoard
@@ -127,6 +137,9 @@ public class cpcsp {
 
 			// checking if the current crosswordBoard is solved
 			if (isBoardSolved(currentCrossWordBoard)) {
+				System.out.println("Solution Found:\n");
+				displayBoard(currentCrossWordBoard);
+				System.out.println();
 				ArrayList<String> hors = new ArrayList<String>();
 				ArrayList<String> vers = new ArrayList<String>();
 				for (int i = 0; i < currentboardState.peek().placements.size(); i++) {
@@ -232,12 +245,16 @@ public class cpcsp {
 			}
 		}
 
+		long endTime = System.currentTimeMillis();
+
 		if (currentboardState.isEmpty()) {
 			System.out.println("Solution doesn't exists");
+			System.out.println("Total no. of backTracks: "+backTrack);
+			System.out.println("Total Time Taken: " + (endTime - startTime));
 		} 
 		else {
-			System.out.println("Solution Found");
 			System.out.println("Total no. of backTracks: "+backTrack);
+			System.out.println("Total Time Taken: " + (endTime - startTime));
 		}
     }
 
@@ -354,10 +371,10 @@ public class cpcsp {
 			Placement placement = currentPlacement.get(i);
 			assign(newcrosswordBoard, placement);
 		}
-		displayBoard(newcrosswordBoard);
-		System.out.println();
-		System.out.println("******************************");
-		System.out.println();
+		// displayBoard(newcrosswordBoard);
+		// System.out.println();
+		// System.out.println("******************************");
+		// System.out.println();
 		return newcrosswordBoard;
 	}
 }
