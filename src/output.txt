@@ -1,9 +1,0 @@
-Solution Found
-a,g,o,*,t,a,p,e,*,o,
-p,*,n,e,a,t,*,a,b,d,
-t,o,*,a,*,m,o,r,e,*,
-*,n,o,t,e,*,w,*,*,t,
-g,e,t,*,c,o,l,u,m,n,
-o,*,p,o,o,l,*,p,o,t,
-Total no. of backTracks: 0
-Total Time Taken: 23

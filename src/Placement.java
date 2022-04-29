@@ -1,5 +1,12 @@
 import java.util.*;
 
+// Placement: a placement is a all possible available spaces 
+// to fill the character representing by its starting coordinates of the board and ending coordinates of 
+// the board. It also connects with the Combination in such a way that placement size is mapped with the 
+// combination size and all the words of that particular size are connected there. New arc and arcCons 
+// connection are initialized which helps in forward checking and arc consistency. Also the most Constraining 
+// and constrained placement heuristic is stored for each placement. Every Horizontal and Vertical Cross 
+// Connection is stored. 
 public class Placement implements Cloneable{
     Combination combination;
     List<Connection> cons;
@@ -46,10 +53,10 @@ public class Placement implements Cloneable{
 		usedWordIndex = -1;
 	}
 
+	// Checking for arc Consistency
 	public boolean arcCons(ArrayList<String> wordsUsed, ArrayList<Placement> sortedByID) {
 
 		ArrayList<String> availableValues = allAvailableWords();
-
 		for (int i = 0; i < wordsUsed.size(); i++) {
 			availableValues.remove(wordsUsed.get(i));
 		}
@@ -82,7 +89,6 @@ public class Placement implements Cloneable{
 						adjNeighbors.arcCons.add(new Connection(c, intersection.dPosition));
 					}
 				}
-
 				isUpdated = adjNeighbors.updatePlacement(wordsUsed);
 				if (!isUpdated) {
 					return false;
@@ -90,67 +96,44 @@ public class Placement implements Cloneable{
 			}
 		}
 		return true;
-
 	}
 
 	public ArrayList<String> assignAValue(ArrayList<String> wordsUsed, ArrayList<Placement> sortedByID) {
 
 		ArrayList<String> availableValues = allAvailableWords();
-		// System.out.println("Available possibleValues: "+availableValues);
 		for (int i = 0; i < wordsUsed.size(); i++) {
 			availableValues.remove(wordsUsed.get(i));
 		}
-		// System.out.println("Available possibleValues after used words removal: "+availableValues);
 		int[] usedIndex = new int[combination.size];
-		// System.out.println("usedIndex.size: "+usedIndex.length);
 		for (int i = 0; i < usedIndex.length; i++) {
 			usedIndex[i] = -1;
 		}
-
 		int hasChange = 0;
-		// System.out.println("crossConnection: "+crossConnection.toString());
 		for (int i = 0; i < crossConnection.size(); i++) {
 			if (sortedByID.get(crossConnection.get(i).id).mostConstrainingPlacementHeuristic != -1) {
 				usedIndex[crossConnection.get(i).sIndex] = i;
 				hasChange++;
 			}
 		}
-		// System.out.println("usedIndex print: ");
-		// for(int i=0;i<usedIndex.length;i++){
-		// 	System.out.print(usedIndex[i]+" ");
-		// }
-		// System.out.println();
 		ArrayList<BestCombination> getBestCombination = new ArrayList<BestCombination>();
 		ArrayList<String> possibleValues = new ArrayList<String>();
-
 		if (hasChange == 0) {
 			if (availableValues.size() == 0)
 				return null;
 			return availableValues;
 		}
 
-		// System.out.println("-------------------");
 		for (int i = 0; i < availableValues.size(); i++) {
 
-			String str = availableValues.get(i);
-			// System.out.println("First Word: "+str);
-
+			String currentWord = availableValues.get(i);
 			int numberOfAvailableNeighborsOptions = 0;
-
 			boolean isWordPossible = true;
-			for (int j = 0; j < str.length(); j++) {
-
-				char ch = str.charAt(j);
-				// System.out.println(j+"th character: "+ch);
-
+			for (int j = 0; j < currentWord.length(); j++) {
+				char ch = currentWord.charAt(j);
 				if (usedIndex[j] != -1) {
 					Intersection intersection = crossConnection.get(usedIndex[j]);
-					// System.out.println("Intersection Info intersection: "+intersection.toString());
 					Placement adjNeighbors = sortedByID.get(intersection.id);
-					// System.out.println("Variable neighbors: "+adjNeighbors.toString());
-					
 					int noOfTimesWords = adjNeighbors.mostConstrainingCombinationHeuristic[ch - 'a'][intersection.dPosition];
-					// System.out.println("Number: "+number);
 					if (noOfTimesWords != 0) {
 						numberOfAvailableNeighborsOptions += noOfTimesWords;
 					} else {
@@ -160,15 +143,9 @@ public class Placement implements Cloneable{
 				}
 			}
 			if (isWordPossible) {
-				// System.out.println("YESSval.listOfWordsSSSS");
 				getBestCombination.add(new BestCombination(numberOfAvailableNeighborsOptions, i));
-				// System.out.println("Fitvalues:");
-				// for(FitValues fv:fitVals){
-				// 	System.out.println(fv.toString());
-				// }
 			}
 		}
-		// System.out.println("-------------------");
 		Collections.sort(getBestCombination, (fv1,fv2)-> fv2.possibleWordsCounter - fv1.possibleWordsCounter);
 		if (getBestCombination.size() == 0) {
 			return null;
@@ -178,7 +155,6 @@ public class Placement implements Cloneable{
 			}
 			return possibleValues;
 		}
-
 	}
 
 	public boolean setMostConstrainingValueHeuristic(ArrayList<String> wordsUsed) {
@@ -330,15 +306,14 @@ public class Placement implements Cloneable{
 	public int[] intersects(Placement placement) {
 
 		int[] charPosition = new int[2];
-
 		if (placement.startXCoord == placement.endXCoord && startXCoord == endXCoord) {
 			return null;
 		}
-
 		if (placement.startYCoord == placement.endYCoord && startYCoord == endYCoord) {
 			return null;
 		}
-		// same row
+
+		// Same Row
 		if (startXCoord == endXCoord) {
 			if (startYCoord <= placement.startYCoord && endYCoord >= placement.startYCoord) {
 				if (placement.startXCoord <= startXCoord && placement.endXCoord >= startXCoord) {
@@ -351,7 +326,8 @@ public class Placement implements Cloneable{
 			} else
 				return null;
 		}
-		// same col 
+		
+		// Same Col
 		if (startYCoord == endYCoord) {
 			if (startXCoord <= placement.startXCoord && endXCoord >= placement.startXCoord) {
 				if (placement.startYCoord <= startYCoord && placement.endYCoord >= startYCoord) {
@@ -423,7 +399,6 @@ class BestCombination {
 		return "[possible Words Counter: " + possibleWordsCounter + " Index: " + index + "]";
 	}
 }
-
 class Combination {
 
 	ArrayList<String> wordList;
@@ -442,7 +417,9 @@ class Combination {
 		return null;
 	}
 
-	// @SuppressWarnings("unchecked")
+	// Use of findAllCombinations: From word dictionary, for every possible word length, 
+	// a 26 x (possible word length) combinations are created and stored in such a way that 
+	// every alphabets at every possible index of the word length.
 	public void findALLCombinations() {
 
 		allCombinations = new ArrayList[26 * size];

@@ -3,12 +3,15 @@ import java.util.*;
 
 public class cpcsp {
     public static void main(String args[]) throws FileNotFoundException, CloneNotSupportedException{
+
+		// Crossword Solver function. args[0] is grid file and args[1] is wordlist file.
         cpSolver(args[0], args[1]);
     }
 
     public static void cpSolver(String crosswordBoardName, String wordListName) throws FileNotFoundException, CloneNotSupportedException{
 
-        File readFile = new File(wordListName);
+        // Fetching all the words from the wordList and stored in listOfWords ArrayList.
+		File readFile = new File(wordListName);
 		Scanner inputReader = new Scanner(readFile);
         ArrayList<String> listOfWords = new ArrayList<String>();
         while(inputReader.hasNext()) {
@@ -19,7 +22,8 @@ public class cpcsp {
 		}
 		inputReader.close();
 		
-		
+		// Fetching the grid and storing in the 2d char array. Here '*' represents blocked cells and 
+		// ' ' represents unblocked cells where characters can be placed. 
 		File readBoard = new File(crosswordBoardName);
 		Scanner inputBoard = new Scanner(readBoard);
 		int noOfLines = 0;
@@ -49,9 +53,9 @@ public class cpcsp {
 			index++;
 		}
 		inputBoardNew.close();
-		// displayBoard(crosswordBoard);
-		// System.out.println();
 
+		// A hashMap is created such that its key is word length and its value is Combination class 
+		// where every word in the word dictionary are mapped to its length.
         HashMap<Integer, Combination> combinationBySize = new HashMap<Integer, Combination>();
 		for (int i = 0; i < listOfWords.size(); i++) {
 
@@ -68,17 +72,27 @@ public class cpcsp {
 			}
 
 		}
+
+		// Use of findAllCombinations: From word dictionary, for every possible word length, 
+		// a 26 x (possible word length) combinations are created and stored in such a way that 
+		// every alphabets at every possible index of the word length.
 		for (Integer size : combinationBySize.keySet()) {
 			combinationBySize.get(size).findALLCombinations();
 		}
 
+		// creating Horizontal and Vertical Placement. Placement: a placement is a all possible available spaces 
+		// to fill the character representing by its starting coordinates of the board and ending coordinates of 
+		// the board. It also connects with the Combination in such a way that placement size is mapped with the 
+		// combination size and all the words of that particular size are connected there. New arc and arcCons 
+		// connection are initialized which helps in forward checking and arc consistency. Also the most Constraining 
+		// and constrained placement heuristic is stored for each placement. Every Horizontal and Vertical Cross 
+		// Connection is stored. 
 		List<Placement> horizontalPlacements = new ArrayList<Placement>();
 		List<Placement> verticalPlacements = new ArrayList<Placement>();
-
 		getHorizontalPlacements(horizontalPlacements, crosswordBoard, combinationBySize);
 		getVerticalPlacements(verticalPlacements, crosswordBoard, combinationBySize);
 
-		// connecting the neighbors (Vertical into Horizontal)
+		// Connecting the Vertical Placement into Horizontal Placement.
 		for (int i = 0; i < horizontalPlacements.size(); i++) {
 			for (int j = 0; j < verticalPlacements.size(); j++) {
 				int[] charPosition = horizontalPlacements.get(i).intersects(verticalPlacements.get(j));
@@ -89,27 +103,25 @@ public class cpcsp {
 			horizontalPlacements.get(i).mostConstrainingPlacementHeuristic = horizontalPlacements.get(i).crossConnection.size();
 		}
 
-		// connecting the neighbors (Horizontal into Vertical)
+		// Connecting the Horizontal Placement into Vertical Placement.
 		for (int i = 0; i < verticalPlacements.size(); i++) {
 			for (int j = 0; j < horizontalPlacements.size(); j++) {
 				int[] charPosition = verticalPlacements.get(i).intersects(horizontalPlacements.get(j));
 				if (charPosition != null) {
-					// System.out.println("Info0: "+info[0]+"Info1: "+info[1]);
 					verticalPlacements.get(i).crossConnection.add(new Intersection(horizontalPlacements.get(j).id, charPosition[0], charPosition[1]));
 				}
 			}
 			verticalPlacements.get(i).mostConstrainingPlacementHeuristic = verticalPlacements.get(i).crossConnection.size();
 		}
 
-		// defining the begin BoardState
+		// Defining the begin BoardState and adding all the horizontal and vertical placements
 		ArrayList<Placement> beginState = new ArrayList<Placement>();
 		BoardState initialS = new BoardState(beginState);
-
-		// adding all the horizontal and vertical placements
 		beginState.addAll(horizontalPlacements);
 		beginState.addAll(verticalPlacements);
 
-		// sorting the begin BoardState by mostConstrainingVariableHeuristic  (heuristic - 1)
+		// sorting the begin BoardState by mostConstrainingPlacementHeuristic  (heuristic - 1)
+		// MostConstrainingPlacementHeuristic: A placement with most contraining variable heuristic.
 		Collections.sort(beginState, (a,b) -> b.mostConstrainingPlacementHeuristic - a.mostConstrainingPlacementHeuristic);
 
 		ArrayList<Placement> beginStateCopyTemp = new ArrayList<Placement>();
@@ -121,23 +133,23 @@ public class cpcsp {
 		// sorting the begin BoardState by ID (heuristic - 2)
 		Collections.sort(beginStateCopy, (a,b) -> a.id - b.id);
 
-		// defining the stack and pushing begin BoardState
+		// Creating a stack with Class BoardState and adding initial BoardState
 		Stack<BoardState> currentboardState = new Stack<BoardState>();
 		currentboardState.push(initialS);
-
 		int backTrack = 0;
 		char[][] currentCrossWordBoard;
 		long startTime = System.currentTimeMillis();
 
 		while (!currentboardState.isEmpty()) {
-			// creating an array list of placements
+			
+			// creating a Placement arraylist and fetching the present crosswordBoard
 			ArrayList<Placement> tempPlacements = new ArrayList<Placement>();
-			// printing the current crosswordBoard
 			currentCrossWordBoard = displayPresentState(currentboardState.peek(), crosswordBoard);
 
-			// checking if the current crosswordBoard is solved
+			// Base Condition to check if the Board is solved or not.
 			if (isBoardSolved(currentCrossWordBoard)) {
 				System.out.println("Solution Found:\n");
+				// Function to print the crossword board.
 				displayBoard(currentCrossWordBoard);
 				System.out.println();
 				ArrayList<String> hors = new ArrayList<String>();
@@ -151,25 +163,23 @@ public class cpcsp {
 				break;
 			}
 
-			// cloning the peek to the tempPlacements
+			// Taking a clone of the peek element of the stack to the tempPlacements
 			for (Placement placement : currentboardState.peek().placements) {
 				tempPlacements.add((Placement) placement.clone());
 			}
 
 			// creating a new tempPlacements that holds the original tempPlacements values sorted by ID
 			ArrayList<Placement> tempPlacementsCopy = new ArrayList<Placement>(tempPlacements);
-
-			// sorting the new tempPlacements
 			Collections.sort(tempPlacementsCopy, (a,b) -> a.id - b.id);
 
-			// getting the Placement with the highest heuristic
+			// Fetching the placement based the mostConstrainingPlacementHeuristic. 
 			Placement selectedPlacement = tempPlacements.get(0);
-			int cc = selectedPlacement.mostConstrainingPlacementHeuristic;
+			int currentMCPS = selectedPlacement.mostConstrainingPlacementHeuristic;
 			int mrvIndex = 0;
 			int mrvPlacement = selectedPlacement.mostConstrainedPlacementHeuristic;
 
 			for (int k = 0; k < tempPlacements.size(); k++) {
-				if (tempPlacements.get(k).mostConstrainingPlacementHeuristic == cc && tempPlacements.get(k).combination != null) {
+				if (tempPlacements.get(k).mostConstrainingPlacementHeuristic == currentMCPS && tempPlacements.get(k).combination != null) {
 					if (tempPlacements.get(k).mostConstrainedPlacementHeuristic <= mrvPlacement) {
 						mrvIndex = k;
 						mrvPlacement = tempPlacements.get(k).mostConstrainedPlacementHeuristic;
@@ -178,27 +188,25 @@ public class cpcsp {
 					break;
 			}
 
-			// now min index represent the Placement with both most constraining Placement and minimum remaining value
+			// mrvIndex represent the placement with most constraining Placement and minimum remaining value (Combination)
 			selectedPlacement = tempPlacements.get(mrvIndex);
 
-			// if the Placement is already filled
+			// Checking if word is already assigned to the placement.
 			if (selectedPlacement.mostConstrainedPlacementHeuristic <= 0) {
 				currentboardState.clear();
 				break;
 			}
 
-			// this list will have all the used words
-			ArrayList<String> newList = new ArrayList<String>();
+			// Here usedWordList is to keep track of all the used words. Adding all the used words here. 
+			ArrayList<String> usedWordList = new ArrayList<String>();
+			usedWordList.addAll(currentboardState.peek().usedWords);
+			usedWordList.addAll(beginStateCopy.get(selectedPlacement.id).words);
 
-			// adding the used words in the crosswordBoard
-			newList.addAll(currentboardState.peek().usedWords);
-			// System.out.println("used words from crosswordBoard added: "+newList); adding the used words in that Placement ( useful in backtracking )
-			newList.addAll(beginStateCopy.get(selectedPlacement.id).words);
+			// getting a list of all the Combination that can fit initially (with the current Connection) sorted by their 
+			// min conflict
+			ArrayList<String> values = selectedPlacement.assignAValue(usedWordList, tempPlacementsCopy);
 
-			// getting a list of all the values that can fit initially (with the current Connection) and also sorted by their min conflict
-			ArrayList<String> values = selectedPlacement.assignAValue(newList, tempPlacementsCopy);
-
-			// if there's no values, then backtrack
+			// If no word can be assigned for the placement, then Backtrack.
 			if (values == null) {
 				beginStateCopy.get(selectedPlacement.id).words.clear();
 				currentboardState.pop();
@@ -208,8 +216,8 @@ public class cpcsp {
 
 			boolean isStuck = false;
 
-			// otherwise we will traverse the values to see who satisfy both the forward
-			// checking and the arc consistency
+			// If any word assignment is possible for the placement then we will check for arc Consistency 
+			// and checks if it pruns out the current placement. 
 			for (int i = 0; i < values.size(); i++) {
 
 				ArrayList<Placement> t1 = new ArrayList<Placement>();
@@ -220,9 +228,9 @@ public class cpcsp {
 				Placement selected = t1.get(mrvIndex);
 				ArrayList<Placement> t2 = new ArrayList<Placement>(t1);
 				Collections.sort(t2, (a,b) -> a.id - b.id);
-				boolean wordAlignmentPossible = selected.addNeighborConnection(values.get(i), t2, newList);
+				boolean wordAlignmentPossible = selected.addNeighborConnection(values.get(i), t2, usedWordList);
 
-				// if the ith value satisfies both the arc consistency and the forward checking then we will assign it safely
+				// Assigning the word to the placement if both forward checking and arc consistency are in favour of the placement. 
 				if (wordAlignmentPossible) {
 					selected.currentPlacement = values.get(i);
 					beginStateCopy.get(selected.id).words.add(values.get(i));
@@ -236,8 +244,8 @@ public class cpcsp {
 
 			}
 
-			// if the loop is done and there's no value that satisfy the forward checking
-			// and the arc consistency, then we will backtrack
+			// If from this placement if the forward checking
+			// and the arc consistency are not feasible , then Backtrack.
 			if (!isStuck) {
 				beginStateCopy.get(selectedPlacement.id).words.clear();
 				currentboardState.pop();
@@ -247,19 +255,20 @@ public class cpcsp {
 
 		long endTime = System.currentTimeMillis();
 
+		// Display Outputs
 		if (currentboardState.isEmpty()) {
 			System.out.println("Solution doesn't exists");
 			System.out.println("Total no. of backTracks: "+backTrack);
-			System.out.println("Total Time Taken: " + (endTime - startTime));
+			System.out.println("Total Time Taken: " + (endTime - startTime) + "ms");
 		} 
 		else {
 			System.out.println("Total no. of backTracks: "+backTrack);
-			System.out.println("Total Time Taken: " + (endTime - startTime));
+			System.out.println("Total Time Taken: " + (endTime - startTime) + "ms");
 		}
     }
 
+	// Function to find continuous possible horizontal placements for complete crossword Board. 
 	public static void getHorizontalPlacements(List<Placement> horizontalPlacements, char[][] crosswordBoard, HashMap<Integer, Combination> combinationBySize) {
-
 		for (int i = 0; i < crosswordBoard.length; i++) {
 			int position = 0;
 			for (int j = 0; j < crosswordBoard[i].length; j++) {
@@ -292,8 +301,8 @@ public class cpcsp {
 
 	}
 
+	// Function to find continuous possible vertical placements for complete crossword Board.
 	public static void getVerticalPlacements(List<Placement> verticalPlacements, char[][] crosswordBoard, HashMap<Integer, Combination> combinationBySize) {
-
 		for (int i = 0; i < crosswordBoard[0].length; i++) {
 			int position = 0;
 			for (int j = 0; j < crosswordBoard.length; j++) {
@@ -324,6 +333,7 @@ public class cpcsp {
 		}
 	}
 	
+	// Function to print the crossword board.
 	public static void displayBoard(char[][] crosswordBoard) {
 		for (int i = 0; i < crosswordBoard.length; i++) {
 			for (int j = 0; j < crosswordBoard[0].length; j++) {
@@ -333,6 +343,7 @@ public class cpcsp {
 		}
 	}
 
+	// Function to check if the Board is solved or not.
 	public static boolean isBoardSolved(char[][] crosswordBoard) {
 		for (int i = 0; i < crosswordBoard.length; i++) {
 			for (int j = 0; j < crosswordBoard[0].length; j++) {
@@ -343,38 +354,38 @@ public class cpcsp {
 		return true;
 	}
 
-	public static void assign(char[][] arr, Placement placement) {
+	// Function to assign the placement to the Board
+	public static void assign(char[][] crosswordBoard, Placement placement) {
 		if (placement.startXCoord == placement.endXCoord) {
 			for (int i = 0; i < placement.currentPlacement.length(); i++) {
-				arr[placement.startXCoord][placement.startYCoord + i] = placement.currentPlacement.charAt(i);
+				crosswordBoard[placement.startXCoord][placement.startYCoord + i] = placement.currentPlacement.charAt(i);
 			}
 		} else {
 			for (int i = 0; i < placement.currentPlacement.length(); i++) {
-				arr[placement.startXCoord + i][placement.startYCoord] = placement.currentPlacement.charAt(i);
+				crosswordBoard[placement.startXCoord + i][placement.startYCoord] = placement.currentPlacement.charAt(i);
 			}
 		}
 	}
 
-	public static char[][] displayPresentState(BoardState s, char[][] grid) {
+	// Function to display any given state of the board.  
+	public static char[][] displayPresentState(BoardState state, char[][] tempArr) {
 
-		char[][] newcrosswordBoard = new char[grid.length][grid[0].length];
-
-		for (int i = 0; i < grid.length; i++) {
-			for (int j = 0; j < grid[0].length; j++) {
-				newcrosswordBoard[i][j] = grid[i][j];
+		char[][] newcrosswordBoard = new char[tempArr.length][tempArr[0].length];
+		for (int i = 0; i < tempArr.length; i++) {
+			for (int j = 0; j < tempArr[0].length; j++) {
+				newcrosswordBoard[i][j] = tempArr[i][j];
 			}
 		}
 
-		ArrayList<Placement> currentPlacement = s.placements;
+		ArrayList<Placement> currentPlacement = state.placements;
 
 		for (int i = 0; i < currentPlacement.size(); i++) {
 			Placement placement = currentPlacement.get(i);
 			assign(newcrosswordBoard, placement);
 		}
-		// displayBoard(newcrosswordBoard);
-		// System.out.println();
-		// System.out.println("******************************");
-		// System.out.println();
+		displayBoard(newcrosswordBoard);
+		System.out.println();
+		System.out.println("******************************\n");
 		return newcrosswordBoard;
 	}
 }
