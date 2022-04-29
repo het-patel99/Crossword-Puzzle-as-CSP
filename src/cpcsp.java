@@ -337,6 +337,10 @@ public class cpcsp {
 	public static void displayBoard(char[][] crosswordBoard) {
 		for (int i = 0; i < crosswordBoard.length; i++) {
 			for (int j = 0; j < crosswordBoard[0].length; j++) {
+				if(j==crosswordBoard[0].length-1){
+					System.out.print(crosswordBoard[i][j]);
+					continue;
+				}
 				System.out.print(crosswordBoard[i][j] + ",");
 			}
 			System.out.println();
