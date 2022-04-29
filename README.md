@@ -2,7 +2,7 @@
 
 <p align="center">
   <a href="Logo">
-    <img alt="CrossWord Board" src="src/crossboard.jpg" width="120" />
+    <img alt="CrossWord Board" src="src/crossboard.jpg"  />
   </a>
 </p>
 
@@ -28,6 +28,6 @@ Constraints: For each pair of vertical and horizontal contiguous segments of unb
 
 <p align="center">
   <a href="Flow Chart">
-    <img alt="Flow Chart" src="src/flowchart.png" width="120" />
+    <img alt="Flow Chart" src="src/flowchart.png"  />
   </a>
 </p>
